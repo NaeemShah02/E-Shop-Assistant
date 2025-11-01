@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Shop Assistant</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    #chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+      padding: 1rem;
+    }
+
+    #chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #chat-messages::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+
+    #chat-messages::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 3px;
+    }
+
+    .message-animation {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .message-bubble {
+      max-width: 80%;
+      padding: 0.75rem 1rem;
+      border-radius: 1rem;
+      margin-bottom: 0.5rem;
+      word-wrap: break-word;
+    }
+
+    .user-message {
+      background-color: #2563eb;
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 0.25rem;
+    }
+
+    .bot-message {
+      background-color: #f3f4f6;
+      color: #1f2937;
+      margin-right: auto;
+      border-bottom-left-radius: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="h-screen bg-gray-50 flex overflow-hidden">
+    <!-- Info Section -->
+    <div class="w-1/2 p-8 bg-white overflow-y-auto">
+      <div class="max-w-lg mx-auto">
+        <div class="flex items-center gap-2 mb-6">
+          <i data-lucide="shopping-cart" class="w-8 h-8 text-blue-600"></i>
+          <h1 class="text-3xl font-bold text-gray-800">E-Shop Assistant</h1>
+        </div>
+        
+        <div class="prose">
+          <p class="text-gray-600 mb-6">
+            Welcome to our E-Shop Assistant! I'm here to help you with any questions about your orders,
+            returns, shipping, and more. Feel free to ask anything about our services.
+          </p>
+          
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">Common Questions</h2>
+          <div class="space-y-3" id="suggested-questions"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div class="w-1/2 bg-gray-50 p-4">
+      <div class="h-full bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="chat-container">
+          <!-- Chat Header -->
+          <div class="p-4 border-b bg-white">
+            <div class="flex items-center gap-2">
+              <i data-lucide="message-square" class="w-5 h-5 text-blue-600"></i>
+              <h2 class="font-semibold text-gray-800">Customer Support</h2>
+            </div>
+          </div>
+
+          <!-- Messages -->
+          <div id="chat-messages">
+            <div class="text-center text-gray-500 mt-8">
+              Start a conversation or select a suggested question
+            </div>
+          </div>
+
+          <!-- Input Area -->
+          <div class="p-4 border-t bg-white">
+            <div class="flex gap-2">
+              <input
+                type="text"
+                id="message-input"
+                placeholder="Type your message..."
+                class="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+              <button id="send-button" class="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <i data-lucide="send" class="w-5 h-5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const chatMessages = document.getElementById("chat-messages");
+    const suggestionsDiv = document.getElementById("suggested-questions");
+    const messageInput = document.getElementById("message-input");
+  
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text) return;
+  
+      // User message
+      addMessage(text, true);
+  
+      // Clear input
+      messageInput.value = "";
+  
+      // Fetch response from backend
+      const response = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+  
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let botMessage = "";
+  
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+  
+        const chunk = decoder.decode(value);
+        chunk.split("\n").forEach((line) => {
+          if (line.startsWith("data: ")) {
+            try {
+              const { type, content } = JSON.parse(line.slice(6));
+              if (type === "content") {
+                botMessage += content;
+              } else if (type === "suggestions") {
+                updateSuggestions(JSON.parse(content));
+              }
+            } catch (e) {
+              console.error("Error processing line:", e);
+            }
+          }
+        });
+      }
+  
+      if (botMessage) {
+        addMessage(botMessage, false);
+      }
+    }
+  
+    function addMessage(message, isUser) {
+      const messageBubble = document.createElement("div");
+      messageBubble.className = `message-animation ${
+        isUser ? "user-message" : "bot-message"
+      } message-bubble`;
+      messageBubble.textContent = message;
+  
+      chatMessages.appendChild(messageBubble);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  
+    function updateSuggestions(suggestions) {
+      suggestionsDiv.innerHTML = "";
+      suggestions.forEach((suggestion) => {
+        const button = document.createElement("button");
+        button.textContent = suggestion;
+        button.className =
+          "block w-full text-left p-3 rounded-lg bg-gray-50 hover:bg-blue-50 transition-colors text-gray-700 hover:text-blue-600";
+        button.onclick = () => {
+          messageInput.value = suggestion;
+          messageInput.focus();
+        };
+        suggestionsDiv.appendChild(button);
+      });
+    }
+  
+    document.getElementById("send-button").onclick = sendMessage;
+    messageInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+  
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+  
+      // Preload common questions
+      const commonQuestions = [
+        "How can I track my order?",
+        "What's your return policy?",
+        "How do I change my shipping address?",
+        "Can I cancel my order?",
+        "Do you ship internationally?"
+      ];
+  
+      updateSuggestions(commonQuestions);
+    });
+  </script>
+  
+</body>
+</html>
