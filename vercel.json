@@ -13,10 +13,5 @@
       "src": "/(.*)",
       "dest": "/api/app.py"
     }
-  ],
-  "excludeFiles": [
-    ".venv/**",
-    "__pycache__/**",
-    "*.pyc"
   ]
 }
