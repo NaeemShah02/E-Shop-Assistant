@@ -17,6 +17,7 @@
       display: flex;
       flex-direction: column;
       height: 100%;
+      
     }
 
     #chat-messages {
@@ -53,7 +54,7 @@
     }
 
     .user-message {
-      background-color: #2563eb;
+      background-color: #487ff5;
       color: white;
       margin-left: auto;
       border-bottom-right-radius: 0.25rem;
@@ -70,20 +71,20 @@
 <body>
   <div class="h-screen bg-gray-50 flex overflow-hidden">
     <!-- Info Section -->
-    <div class="w-1/2 p-8 bg-white overflow-y-auto">
+    <div class="w-1/2 p-8 bg-white overflow-y-auto" style="background-color: #487ff5;">
       <div class="max-w-lg mx-auto">
         <div class="flex items-center gap-2 mb-6">
-          <i data-lucide="shopping-cart" class="w-8 h-8 text-blue-600"></i>
-          <h1 class="text-3xl font-bold text-gray-800">E-Shop Assistant</h1>
+          <i data-lucide="shopping-cart" class="w-8 h-8 text-white"></i>
+          <h1 class="text-3xl font-bold text-gray-800" style="color: white;">E-Shop Assistant</h1>
         </div>
         
         <div class="prose">
-          <p class="text-gray-600 mb-6">
+          <p class="text-gray-600 mb-6" style="color: white;">
             Welcome to our E-Shop Assistant! I'm here to help you with any questions about your orders,
             returns, shipping, and more. Feel free to ask anything about our services.
           </p>
           
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">Common Questions</h2>
+          <h2 class="text-xl font-semibold text-gray-800 mb-4" style="color: white;">Common Questions</h2>
           <div class="space-y-3" id="suggested-questions"></div>
         </div>
       </div>
